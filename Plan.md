@@ -266,14 +266,3 @@ Ticket Booked Successfully!
 
 ---
 
-## 16. Author
-
-**[Your Name]**  
-BS Computer Science — [Your University Name]  
-GitHub: [@your-username](https://github.com/your-username)
-
----
-
-## 17. License
-
-This project is open source and available under the [MIT License](LICENSE).
