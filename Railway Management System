@@ -1,0 +1,308 @@
+/*                                Project : Railway Mangement System
+
+*/
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+//----- function prototype
+void menu(void);
+void viewtrain(void);
+void bookTicket(void);
+void viewBookedTickets(void);
+void updateticket(void);
+void cancelticket(void);
+int generateTicketNumber(void);
+
+// -------------------- MENU --------------------
+void menu(void)
+{
+    printf("=======================================================\n");
+    printf("\tWELCOME TO RAILWAY MANAGEMENT SYSTEM\n");
+    printf("=======================================================\n");
+    printf("1. View Available Trains\n");
+    printf("2. Book Ticket\n");
+    printf("3. View Booked Tickets\n");
+    printf("4. Update Book Tickets\n");
+    printf("5. Cancel Ticket\n");
+    printf("6. Exit\n");
+    printf("=======================================================\n");
+    printf("\t\tRAILWAY MANAGEMENT SYSTEM\n");
+    printf("=======================================================\n");
+}
+
+// -------------------- VIEW TRAINS --------------------
+void viewtrain(void)
+{
+    printf("=======================================================\n");
+    printf("\t\tTRAIN INFORMATION\n");
+    printf("=======================================================\n");
+    printf("TRAIN NO | NAME             | FROM | TO  | TIME\n");
+    printf("=======================================================\n");
+    printf("101      | GREEN LINE       | KHI  | ISB | 9:00 AM\n");
+    printf("102      | PAK EXPRESS      | LHR  | KHI | 10:30 AM\n");
+    printf("103      | JINNAH EXPRESS   | RWP  | KHI | 11:00 AM\n");
+    printf("=======================================================\n");
+}
+
+// -------------------- BOOK TICKET (AUTO TICKET NUMBER) --------------------
+void bookTicket(void)
+{
+    FILE *file;
+    char passengerName[50];
+    int trainNumber;
+    int ticketNumber;
+
+    file = fopen("tickets.txt", "a");
+    if (file == NULL)
+    {
+        printf("Error: Could not open tickets file!\n");
+        return;
+    }
+
+    printf("\n--- BOOK TRAIN TICKET ---\n");
+
+    // Auto-generate ticket number
+    ticketNumber = generateTicketNumber();
+    printf("Generated Ticket Number: %d\n", ticketNumber);
+
+    // Passenger name
+    printf("Enter passenger name: ");
+    scanf(" %[^\n]", passengerName);
+
+    // Train number with validation
+    while (1)
+    {
+        printf("Enter train number (101/102/103): ");
+        scanf("%d", &trainNumber);
+
+        if (trainNumber == 101 || trainNumber == 102 || trainNumber == 103)
+            break;
+
+        printf("Train is not available. Try again.\n");
+    }
+
+    // Store ticket in file
+    fprintf(file, "%d,%s,%d\n", ticketNumber, passengerName, trainNumber);
+    fclose(file);
+
+    printf("\nTicket Booked Successfully!\n");
+    printf("===========================\n");
+    printf(" Ticket No : %d\n", ticketNumber);
+    printf(" Name      : %s\n", passengerName);
+    printf(" Train No  : %d\n", trainNumber);
+    printf("===========================\n");
+}
+
+// -------------------- VIEW BOOKED TICKETS --------------------
+void viewBookedTickets(void)
+{
+    FILE *file = fopen("tickets.txt", "r");
+    int ticketNumber, trainNumber;
+    char passengerName[50];
+
+    if (file == NULL)
+    {
+        printf("\nNo tickets booked yet!\n");
+        return;
+    }
+
+    printf("\n========== BOOKED TICKETS ==========\n");
+
+    while (fscanf(file, "%d,%[^,],%d\n", &ticketNumber, passengerName, &trainNumber) == 3)
+    {
+        printf("=================================\n");
+        printf(" Ticket No : %d\n", ticketNumber);
+        printf(" Name      : %s\n", passengerName);
+        printf(" Train No  : %d\n", trainNumber);
+    }
+
+    printf("=================================\n");
+    fclose(file);
+}
+
+// -------------------- UPDATE TICKET --------------------
+void updateticket(void)
+{
+    int tNo, trainNo, ticketID, found = 0;
+    char name[50];
+
+    FILE *fp = fopen("tickets.txt", "r");
+    if (fp == NULL)
+    {
+        printf("No ticket found!\n");
+        return;
+    }
+
+    FILE *temp = fopen("temp.txt", "w");
+    if (temp == NULL)
+    {
+        printf("Error opening temp file!\n");
+        fclose(fp);
+        return;
+    }
+    printf("Enter Ticket Number to update: ");
+    scanf("%d", &ticketID);
+
+    while (fscanf(fp, "%d,%[^,],%d\n", &tNo, name, &trainNo) == 3)
+    {
+        if (tNo == ticketID)
+        {
+            found = 1;
+            printf("Current Name     : %s\n", name);
+            printf("Current Train No : %d\n", trainNo);
+
+            printf("Enter New Name: ");
+            scanf(" %[^\n]", name);
+
+            while (1)
+            {
+                printf("Enter train number (101/102/103): ");
+                scanf("%d", &trainNo);
+
+                if (trainNo == 101 || trainNo == 102 || trainNo == 103)
+                    break;
+
+                printf("Train is not available. Try again.\n");
+            }
+
+            printf("Ticket updated successfully!\n");
+            fprintf(temp, "%d,%s,%d\n", tNo, name, trainNo);
+        }
+        else
+        {
+            fprintf(temp, "%d,%s,%d\n", tNo, name, trainNo);
+        }
+    }
+
+    fclose(fp);
+    fclose(temp);
+
+    remove("tickets.txt");
+    rename("temp.txt", "tickets.txt");
+
+    if (!found)
+        printf("No ticket found with this number.\n");
+}
+
+// -------------------- CANCEL TICKET --------------------
+void cancelticket(void)
+{
+    FILE *fp = fopen("tickets.txt", "r");
+    if (fp == NULL)
+    {
+        printf("No tickets found!\n");
+        return;
+    }
+
+    FILE *temp = fopen("temp.txt", "w");
+    if (temp == NULL)
+    {
+        printf("Error: Could not open temp file!\n");
+        fclose(fp);
+        return;
+    }
+
+    int ticketID;
+    int tNo, trainNo;
+    char pname[50];
+    int found = 0;
+
+    printf("Enter Ticket Number to cancel: ");
+    scanf("%d", &ticketID);
+
+    while (fscanf(fp, "%d,%[^,],%d\n", &tNo, pname, &trainNo) == 3)
+    {
+        if (tNo == ticketID)
+        {
+            found = 1;
+            printf("Ticket %d cancelled successfully!\n", ticketID);
+            // skip writing it in temp
+        }
+        else
+        {
+            fprintf(temp, "%d,%s,%d\n", tNo, pname, trainNo);
+        }
+    }
+
+    fclose(fp);
+    fclose(temp);
+
+    remove("tickets.txt");
+    rename("temp.txt", "tickets.txt");
+
+    if (!found)
+        printf("Ticket ID not found!\n");
+}
+
+// Auto generator for ticket number (starts from 1, then 2, 3, 4...)
+int generateTicketNumber(void)
+{
+    FILE *file = fopen("tickets.txt", "r");
+    int ticketNumber, trainNumber;
+    char passengerName[50];
+    int lastTicketNumber = 0;
+
+    if (file == NULL)
+    {
+        return 1;
+    }
+
+    while (fscanf(file, "%d,%49[^,],%d\n", &ticketNumber, passengerName, &trainNumber) == 3)
+    {
+        if (ticketNumber > lastTicketNumber)
+        {
+            lastTicketNumber = ticketNumber;
+        }
+    }
+
+    fclose(file);
+
+    return lastTicketNumber + 1;
+}
+
+//-----------execution starts here----------//
+int main(void)
+{
+    int choice;
+
+    do
+    {
+        menu();
+        printf("Enter your choice: ");
+        scanf("%d", &choice);
+
+        switch (choice)
+        {
+        case 1:
+            viewtrain();
+            break;
+        case 2:
+            bookTicket();
+            break;
+        case 3:
+            viewBookedTickets();
+            break;
+        case 4:
+            updateticket();
+            break;
+        case 5:
+            cancelticket();
+            break;
+        case 6:
+            printf("=======================================================\n");
+            printf("\t\tTHANK YOU FOR VISITING US\n");
+            printf("=======================================================\n");
+            break;
+        default:
+            printf("Invalid input! Please try again.\n");
+        }
+
+        printf("\n");
+
+    } while (choice != 6);
+
+    return 0;
+}
+
+//-------END-------//
